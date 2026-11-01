@@ -186,10 +186,7 @@ private struct CSVTransferable: Transferable {
 
 // MARK: - custom SortComparator
 /// For columns created programmatically, it can take types like date, array, and etc.
-/// However, for columns loaded from CSV, they seem to be always taking `Int`, `Double`, and `String` (even date strings will be string).
-/// Technically speaking, for the current set up where the user will only be able to choose from `Int`, `Double`, and `String`,
-/// and loaded CSV will also only result in those three types,
-/// `Int`, `Double`, and `String` are all we need to handle here.
+/// However, for columns loaded from CSV, they seem to be always taking `Int`, `Double`, and `String` (even date strings will be string). Even though the [`CSVType`](https://developer.apple.com/documentation/tabulardata/csvtype) contains type like date, data, and etc, those types won't show up unless specified explicitly while loading CSV with  `types: [String : CSVType] = [:]`.
 private struct AnyComparator: SortComparator {
 
     var order: SortOrder = .forward
@@ -203,6 +200,11 @@ private struct AnyComparator: SortComparator {
     func compare(_ lhs: Any?, _ rhs: Any?)
         -> ComparisonResult
     {
+        /// Bool
+        if let lhs = lhs as? Bool?, let rhs = rhs as? Bool? {
+            return compareBool(lhs, rhs)
+        }
+
         /// Int
         if let lhs = lhs as? Int?, let rhs = rhs as? Int? {
             return compareInt(lhs, rhs)
@@ -242,6 +244,10 @@ private struct AnyComparator: SortComparator {
     }
 
     private func compareNil(_ lhs: Bool, _ rhs: Bool) -> ComparisonResult {
+        return compareBool(lhs, rhs)
+    }
+
+    private func compareBool(_ lhs: Bool?, _ rhs: Bool?) -> ComparisonResult {
         if lhs == rhs {
             return .orderedSame
         }
